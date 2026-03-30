@@ -1,0 +1,44 @@
+# FusionAttend-Net – default training configuration
+# All paths may be overridden via CLI arguments in train.py.
+
+# ── Dataset ────────────────────────────────────────────────────────────────
+dataset:
+  name: katra_twelve          # one of: katra_twelve | bari_sunflower | fgvc8 | plantvillage
+  root: data/katra_twelve     # root directory (ImageFolder layout)
+  image_size: 224             # square crop / resize dimension
+  num_workers: 4
+  balance_classes: true       # WeightedRandomSampler for imbalanced datasets
+
+# ── Model ──────────────────────────────────────────────────────────────────
+model:
+  num_classes: 12             # adjust per dataset
+  in_channels: 3
+  width_multiple: 0.5         # YOLOv5-s width factor
+  depth_multiple: 0.33        # YOLOv5-s depth factor
+  psa_reduction: 16           # PSA channel reduction ratio
+  psa_pyramid_levels: [1, 2, 4, 8]
+  dropout: 0.3
+
+# ── Training ───────────────────────────────────────────────────────────────
+training:
+  epochs: 100
+  batch_size: 32
+  k_folds: 4
+  seed: 42
+
+# ── Optimiser ──────────────────────────────────────────────────────────────
+optimizer:
+  name: adamw
+  lr: 0.001
+  weight_decay: 0.0001
+  momentum: 0.9               # used only when name == sgd
+
+# ── LR scheduler ───────────────────────────────────────────────────────────
+scheduler:
+  name: cosine               # one of: cosine | step | none
+  warmup_epochs: 5
+
+# ── Output ─────────────────────────────────────────────────────────────────
+output:
+  save_dir: outputs/katra_twelve
+  log_interval: 10           # print every N batches

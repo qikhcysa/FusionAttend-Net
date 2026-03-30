@@ -1,0 +1,34 @@
+dataset:
+  name: plantvillage
+  root: data/plantvillage
+  image_size: 224
+  num_workers: 4
+  balance_classes: false      # PlantVillage is relatively balanced
+
+model:
+  num_classes: 38
+  in_channels: 3
+  width_multiple: 0.5
+  depth_multiple: 0.33
+  psa_reduction: 16
+  psa_pyramid_levels: [1, 2, 4, 8]
+  dropout: 0.3
+
+training:
+  epochs: 100
+  batch_size: 64
+  k_folds: 4
+  seed: 42
+
+optimizer:
+  name: adamw
+  lr: 0.001
+  weight_decay: 0.0001
+
+scheduler:
+  name: cosine
+  warmup_epochs: 5
+
+output:
+  save_dir: outputs/plantvillage
+  log_interval: 20
