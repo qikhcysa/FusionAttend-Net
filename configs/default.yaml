@@ -1,0 +1,45 @@
+# FusionAttend-Net – Katra-Twelve configuration
+# All paths may be overridden via CLI arguments in train.py.
+
+# ── Dataset ────────────────────────────────────────────────────────────────
+dataset:
+  name: katra_twelve
+  root: datasets/Katra_Twelve/train   # ImageFolder layout; val/test under sibling dirs
+  image_size: 256
+  num_workers: 4
+  balance_classes: true
+
+# ── Model ──────────────────────────────────────────────────────────────────
+model:
+  num_classes: 22              # 12 plants × (healthy + disease) categories
+  in_channels: 3
+  width_multiple: 0.5          # YOLOv5-s width factor
+  depth_multiple: 0.33         # YOLOv5-s depth factor
+  psa_reduction: 16
+  psa_pyramid_levels: [1, 2, 4, 8]
+  dropout: 0.3
+  attention: psa               # one of: psa | se | eca | ese | cbam | ca | parnet
+
+# ── Training ───────────────────────────────────────────────────────────────
+training:
+  epochs: 30
+  adam_epochs: 15              # first 15 epochs use Adam; remaining use SGD
+  batch_size: 64
+  k_folds: 4
+  seed: 42
+  early_stop_patience: 6
+
+# ── Optimiser ──────────────────────────────────────────────────────────────
+optimizer:
+  lr: 0.01
+  weight_decay: 0.0005
+  momentum: 0.9
+
+# ── LR scheduler ───────────────────────────────────────────────────────────
+scheduler:
+  name: cosine
+
+# ── Output ─────────────────────────────────────────────────────────────────
+output:
+  save_dir: outputs/katra_twelve
+  log_interval: 10
