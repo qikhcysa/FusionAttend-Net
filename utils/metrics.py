@@ -2,18 +2,19 @@
 Evaluation metrics for FusionAttend-Net.
 
 Provides:
-    * :func:`compute_metrics` – accuracy, per-class precision / recall /
-      F1-score and macro-averaged F1.
+    * :func:`compute_metrics` – accuracy, precision, recall, per-class and
+      macro-averaged F1-score.
+    * :func:`compute_model_stats` – parameter count and GFLOPs.
     * :class:`AverageMeter` – running mean tracker for loss / accuracy.
 """
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 import torch
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, precision_score, recall_score
 
 
 class AverageMeter:
@@ -42,7 +43,7 @@ class AverageMeter:
 def compute_metrics(
     all_labels: list,
     all_preds: list,
-    class_names: list | None = None,
+    class_names: Optional[list] = None,
 ) -> Dict:
     """
     Compute classification metrics from flat lists of ground-truth labels
@@ -55,10 +56,11 @@ def compute_metrics(
 
     Returns:
         Dictionary with keys:
-            * ``"accuracy"``  – top-1 accuracy (float, 0–1).
-            * ``"macro_f1"``  – macro-averaged F1-score.
-            * ``"report"``    – full per-class ``classification_report``
-              string from scikit-learn.
+            * ``"accuracy"``         – top-1 accuracy (float, 0–1).
+            * ``"macro_f1"``         – macro-averaged F1-score.
+            * ``"macro_precision"``  – macro-averaged precision.
+            * ``"macro_recall"``     – macro-averaged recall.
+            * ``"report"``           – full per-class ``classification_report`` string.
             * ``"confusion_matrix"`` – NumPy confusion matrix (C×C).
     """
     labels_arr = np.array(all_labels)
@@ -73,16 +75,54 @@ def compute_metrics(
     )
     cm = confusion_matrix(labels_arr, preds_arr)
 
-    # Macro F1 (unweighted mean across classes)
     from sklearn.metrics import f1_score
     macro_f1 = float(f1_score(labels_arr, preds_arr, average="macro", zero_division=0))
+    macro_precision = float(precision_score(labels_arr, preds_arr, average="macro", zero_division=0))
+    macro_recall = float(recall_score(labels_arr, preds_arr, average="macro", zero_division=0))
 
     return {
         "accuracy": accuracy,
         "macro_f1": macro_f1,
+        "macro_precision": macro_precision,
+        "macro_recall": macro_recall,
         "report": report,
         "confusion_matrix": cm,
     }
+
+
+def compute_model_stats(
+    model: torch.nn.Module,
+    input_size: tuple = (1, 3, 256, 256),
+) -> Dict:
+    """
+    Compute the parameter count and GFLOPs for a model.
+
+    Args:
+        model: PyTorch model.
+        input_size: Input tensor shape ``(B, C, H, W)`` (default
+            ``(1, 3, 256, 256)``).
+
+    Returns:
+        Dictionary with keys:
+            * ``"params"``   – total trainable parameter count (int).
+            * ``"gflops"``   – GFLOPs estimate (float; ``-1.0`` if ``thop``
+              is not installed).
+    """
+    params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    gflops = -1.0
+    try:
+        from thop import profile
+        device = next(model.parameters()).device
+        dummy = torch.randn(*input_size, device=device)
+        model.eval()
+        with torch.no_grad():
+            macs, _ = profile(model, inputs=(dummy,), verbose=False)
+        gflops = macs * 2 / 1e9
+    except ImportError:
+        pass
+
+    return {"params": params, "gflops": gflops}
 
 
 def topk_accuracy(output: torch.Tensor, target: torch.Tensor, topk: tuple = (1,)) -> list:

@@ -1,44 +1,45 @@
-# FusionAttend-Net – default training configuration
+# FusionAttend-Net – Katra-Twelve configuration
 # All paths may be overridden via CLI arguments in train.py.
 
 # ── Dataset ────────────────────────────────────────────────────────────────
 dataset:
-  name: katra_twelve          # one of: katra_twelve | bari_sunflower | fgvc8 | plantvillage
-  root: data/katra_twelve     # root directory (ImageFolder layout)
-  image_size: 224             # square crop / resize dimension
+  name: katra_twelve
+  root: datasets/Katra_Twelve/train   # ImageFolder layout; val/test under sibling dirs
+  image_size: 256
   num_workers: 4
-  balance_classes: true       # WeightedRandomSampler for imbalanced datasets
+  balance_classes: true
 
 # ── Model ──────────────────────────────────────────────────────────────────
 model:
-  num_classes: 12             # adjust per dataset
+  num_classes: 22              # 12 plants × (healthy + disease) categories
   in_channels: 3
-  width_multiple: 0.5         # YOLOv5-s width factor
-  depth_multiple: 0.33        # YOLOv5-s depth factor
-  psa_reduction: 16           # PSA channel reduction ratio
+  width_multiple: 0.5          # YOLOv5-s width factor
+  depth_multiple: 0.33         # YOLOv5-s depth factor
+  psa_reduction: 16
   psa_pyramid_levels: [1, 2, 4, 8]
   dropout: 0.3
+  attention: psa               # one of: psa | se | eca | ese | cbam | ca | parnet
 
 # ── Training ───────────────────────────────────────────────────────────────
 training:
-  epochs: 100
-  batch_size: 32
+  epochs: 30
+  adam_epochs: 15              # first 15 epochs use Adam; remaining use SGD
+  batch_size: 64
   k_folds: 4
   seed: 42
+  early_stop_patience: 6
 
 # ── Optimiser ──────────────────────────────────────────────────────────────
 optimizer:
-  name: adamw
-  lr: 0.001
-  weight_decay: 0.0001
-  momentum: 0.9               # used only when name == sgd
+  lr: 0.01
+  weight_decay: 0.0005
+  momentum: 0.9
 
 # ── LR scheduler ───────────────────────────────────────────────────────────
 scheduler:
-  name: cosine               # one of: cosine | step | none
-  warmup_epochs: 5
+  name: cosine
 
 # ── Output ─────────────────────────────────────────────────────────────────
 output:
   save_dir: outputs/katra_twelve
-  log_interval: 10           # print every N batches
+  log_interval: 10

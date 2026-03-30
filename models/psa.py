@@ -32,13 +32,13 @@ class PSA(nn.Module):
         if pyramid_levels is None:
             pyramid_levels = [1, 2, 4, 8]
         self.pyramid_levels = pyramid_levels
-        num_levels = len(pyramid_levels)
 
         # Shared squeeze projection across all levels (parameter-efficient)
         reduced = max(channels // reduction, 1)
         self.squeeze = nn.Linear(channels, reduced, bias=False)
         self.excite = nn.Linear(reduced, channels, bias=False)
-        self.bn = nn.BatchNorm1d(reduced)
+        # LayerNorm works correctly for any batch size, including batch=1
+        self.norm = nn.LayerNorm(reduced)
         self.act = nn.SiLU(inplace=True)
         self.sigmoid = nn.Sigmoid()
 
@@ -65,7 +65,7 @@ class PSA(nn.Module):
         z = torch.stack(descriptors, dim=0).mean(dim=0)  # (B, C)
 
         # Shared FC bottleneck
-        z = self.act(self.bn(self.squeeze(z)))  # (B, reduced)
+        z = self.act(self.norm(self.squeeze(z)))  # (B, reduced)
         z = self.sigmoid(self.excite(z))         # (B, C)
 
         # Rescale input feature map

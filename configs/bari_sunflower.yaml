@@ -1,33 +1,35 @@
 dataset:
   name: bari_sunflower
-  root: data/bari_sunflower
-  image_size: 224
+  root: datasets/BARI_Sunflower/train
+  image_size: 256
   num_workers: 4
   balance_classes: true
 
 model:
-  num_classes: 3
+  num_classes: 4               # healthy + 3 disease categories
   in_channels: 3
   width_multiple: 0.5
   depth_multiple: 0.33
   psa_reduction: 16
   psa_pyramid_levels: [1, 2, 4, 8]
   dropout: 0.3
+  attention: psa
 
 training:
-  epochs: 100
-  batch_size: 32
+  epochs: 30
+  adam_epochs: 15
+  batch_size: 64
   k_folds: 4
   seed: 42
+  early_stop_patience: 6
 
 optimizer:
-  name: adamw
-  lr: 0.001
-  weight_decay: 0.0001
+  lr: 0.01
+  weight_decay: 0.0005
+  momentum: 0.9
 
 scheduler:
   name: cosine
-  warmup_epochs: 5
 
 output:
   save_dir: outputs/bari_sunflower

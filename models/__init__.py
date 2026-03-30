@@ -4,6 +4,7 @@ from .dfn import DFN
 from .psa import PSA
 from .psan import PSAN
 from .fusionattend_net import FusionAttendNet
+from .attention import build_attention, AVAILABLE_ATTENTIONS
 
 __all__ = [
     "YOLOv5Backbone",
@@ -12,4 +13,6 @@ __all__ = [
     "PSA",
     "PSAN",
     "FusionAttendNet",
+    "build_attention",
+    "AVAILABLE_ATTENTIONS",
 ]
